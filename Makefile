@@ -1,13 +1,11 @@
 .PHONY: all build release
 
 IMAGE=dddpaul/vscalebot
-VERSION=0.5
+VERSION=0.6
 
 all: build
 
 build-alpine:
-	go get github.com/vscale/go-vscale
-	go get gopkg.in/telegram-bot-api.v4
 	CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o ./bin/vscalebot ./main.go
 
 build:
