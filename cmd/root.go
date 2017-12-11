@@ -14,7 +14,6 @@ import (
 type VscaleAccount struct {
 	Name  string
 	Token string
-	ID    int64
 }
 
 type arrayFlags []string

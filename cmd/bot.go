@@ -46,25 +46,6 @@ func startBot(accounts []*VscaleAccount) {
 	bot.Debug = verbose
 	log.Printf("Authorized on account %s", bot.Self.UserName)
 
-	c := make(chan tgbotapi.MessageConfig)
-	go func() {
-		for msg := range c {
-			bot.Send(msg)
-		}
-	}()
-
-	subscribed := false
-	go func() {
-		ticker := time.NewTicker(time.Second * 10)
-		for range ticker.C {
-			if subscribed {
-				for _, acc := range accounts {
-					c <- tgbotapi.NewMessage(acc.ID, fmt.Sprintf("%s balance is %.2f roubles", acc.Name, balance(acc.Token)))
-				}
-			}
-		}
-	}()
-
 	updates, _ := bot.GetUpdatesChan(tgbotapi.UpdateConfig{
 		Offset:  0,
 		Limit:   0,
@@ -79,16 +60,22 @@ func startBot(accounts []*VscaleAccount) {
 		text := update.Message.Text
 		log.Printf("[%s] %s", update.Message.From.UserName, text)
 
-		for _, acc := range accounts {
-			acc.ID = update.Message.Chat.ID
-			if text == "/"+acc.Name {
-				c <- tgbotapi.NewMessage(acc.ID, fmt.Sprintf("%s balance is %.2f roubles", acc.Name, balance(acc.Token)))
+		for _, account := range accounts {
+			if text == "/"+account.Name {
+				msg := tgbotapi.NewMessage(update.Message.Chat.ID,
+					fmt.Sprintf("%s balance is %.2f roubles", account.Name, balance(account.Token)))
+				bot.Send(msg)
 			} else if text == "/start" {
-				subscribed = true
-				c <- tgbotapi.NewMessage(acc.ID, fmt.Sprintf("%s subscribed", acc.Name))
-			} else if text == "/stop" {
-				subscribed = false
-				c <- tgbotapi.NewMessage(acc.ID, fmt.Sprintf("%s unsubscribed", acc.Name))
+				msg := tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("Subscription accepted"))
+				bot.Send(msg)
+				go func() {
+					ticker := time.NewTicker(time.Minute * 1)
+					for range ticker.C {
+						msg := tgbotapi.NewMessage(update.Message.Chat.ID,
+							fmt.Sprintf("%s balance is %.2f roubles", account.Name, balance(account.Token)))
+						bot.Send(msg)
+					}
+				}()
 			}
 		}
 	}
