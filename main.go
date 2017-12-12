@@ -12,9 +12,8 @@ import (
 )
 
 type VscaleAccount struct {
-	Name  string
-	Token string
-	ID    int64
+	Token  string
+	ChatID int64
 }
 
 type arrayFlags []string
@@ -28,17 +27,16 @@ func (flags *arrayFlags) Set(value string) error {
 	return nil
 }
 
-func (flags *arrayFlags) toMap() ([]*VscaleAccount, error) {
-	var accounts []*VscaleAccount
+func (flags *arrayFlags) toMap() (map[string]*VscaleAccount, error) {
+	accounts := make(map[string]*VscaleAccount)
 	for _, s := range *flags {
 		items := strings.Split(s, "=")
 		if len(items) == 0 {
 			return nil, errors.New("incorrect Vscale name to token map format")
 		}
-		accounts = append(accounts, &VscaleAccount{
-			Name:  items[0],
+		accounts[items[0]] = &VscaleAccount{
 			Token: items[1],
-		})
+		}
 	}
 	return accounts, nil
 }
@@ -69,7 +67,7 @@ func main() {
 	start(accounts)
 }
 
-func start(accounts []*VscaleAccount) {
+func start(accounts map[string]*VscaleAccount) {
 	bot, err := tgbotapi.NewBotAPI(telegramToken)
 	if err != nil {
 		log.Panic(err)
@@ -90,8 +88,8 @@ func start(accounts []*VscaleAccount) {
 		ticker := time.NewTicker(time.Second * 10)
 		for range ticker.C {
 			if subscribed {
-				for _, acc := range accounts {
-					c <- tgbotapi.NewMessage(acc.ID, fmt.Sprintf("%s balance is %.2f roubles", acc.Name, balance(acc.Token)))
+				for name, acc := range accounts {
+					c <- tgbotapi.NewMessage(acc.ChatID, fmt.Sprintf("%s balance is %.2f roubles", name, balance(acc.Token)))
 				}
 			}
 		}
@@ -111,16 +109,16 @@ func start(accounts []*VscaleAccount) {
 		text := update.Message.Text
 		log.Printf("[%s] %s", update.Message.From.UserName, text)
 
-		for _, acc := range accounts {
-			acc.ID = update.Message.Chat.ID
-			if text == "/"+acc.Name {
-				c <- tgbotapi.NewMessage(acc.ID, fmt.Sprintf("%s balance is %.2f roubles", acc.Name, balance(acc.Token)))
+		for name, acc := range accounts {
+			acc.ChatID = update.Message.Chat.ID
+			if text == "/"+name {
+				c <- tgbotapi.NewMessage(acc.ChatID, fmt.Sprintf("%s balance is %.2f roubles", name, balance(acc.Token)))
 			} else if text == "/start" {
 				subscribed = true
-				c <- tgbotapi.NewMessage(acc.ID, fmt.Sprintf("%s subscribed", acc.Name))
+				c <- tgbotapi.NewMessage(acc.ChatID, fmt.Sprintf("%s subscribed", name))
 			} else if text == "/stop" {
 				subscribed = false
-				c <- tgbotapi.NewMessage(acc.ID, fmt.Sprintf("%s unsubscribed", acc.Name))
+				c <- tgbotapi.NewMessage(acc.ChatID, fmt.Sprintf("%s unsubscribed", name))
 			}
 		}
 	}
