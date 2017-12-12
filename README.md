@@ -19,8 +19,12 @@ Usage:
 
 ```
 Usage of ./vscalebot:
+  -interval duration
+    	Subscription messages interval in nanoseconds (default 10m0s)
   -telegram-token string
     	Telegram API token
+  -threshold float
+    	Subscription messages threshold in roubles (default 100)
   -verbose
     	Enable bot debug
   -vscale value
