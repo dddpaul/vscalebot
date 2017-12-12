@@ -46,13 +46,15 @@ var (
 	telegramToken string
 	accountsFlags arrayFlags
 	interval      time.Duration
+	threshold     float64
 )
 
 func main() {
 	flag.BoolVar(&verbose, "verbose", false, "Enable bot debug")
 	flag.StringVar(&telegramToken, "telegram-token", "", "Telegram API token")
 	flag.Var(&accountsFlags, "vscale", "List of Vscale name to token maps, i.e. 'swarm=123456'")
-	flag.DurationVar(&interval, "interval", 600, "Subscription messages interval in seconds, default is 600")
+	flag.DurationVar(&interval, "interval", 600000000000, "Subscription messages interval in nanoseconds")
+	flag.Float64Var(&threshold, "threshold", 100, "Subscription messages threshold in roubles")
 	flag.Parse()
 
 	if len(telegramToken) == 0 {
@@ -89,11 +91,14 @@ func start(accounts map[string]*VscaleAccount) {
 
 	subscribed := false
 	go func() {
-		ticker := time.NewTicker(time.Second * interval)
+		ticker := time.NewTicker(interval)
 		for range ticker.C {
 			if subscribed {
 				for name, acc := range accounts {
-					c <- tgbotapi.NewMessage(acc.ChatID, fmt.Sprintf("%s balance is %.2f roubles", name, balance(acc.Token)))
+					balance := balance(acc.Token)
+					if balance <= threshold {
+						c <- tgbotapi.NewMessage(acc.ChatID, fmt.Sprintf("%s balance is %.2f roubles", name, balance))
+					}
 				}
 			}
 		}
@@ -119,7 +124,7 @@ func start(accounts map[string]*VscaleAccount) {
 				c <- tgbotapi.NewMessage(acc.ChatID, fmt.Sprintf("%s balance is %.2f roubles", name, balance(acc.Token)))
 			} else if text == "/start" {
 				subscribed = true
-				c <- tgbotapi.NewMessage(acc.ChatID, fmt.Sprintf("%s subscribed", name))
+				c <- tgbotapi.NewMessage(acc.ChatID, fmt.Sprintf("%s subscribed with %.2f roubles threshold", name, threshold))
 			} else if text == "/stop" {
 				subscribed = false
 				c <- tgbotapi.NewMessage(acc.ChatID, fmt.Sprintf("%s unsubscribed", name))
