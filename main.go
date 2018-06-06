@@ -4,11 +4,14 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"github.com/vscale/go-vscale"
-	"gopkg.in/telegram-bot-api.v4"
 	"log"
 	"strings"
 	"time"
+
+	"github.com/docker/libkv/store"
+	"github.com/docker/libkv/store/boltdb"
+	"github.com/vscale/go-vscale"
+	"gopkg.in/telegram-bot-api.v4"
 )
 
 type VscaleAccount struct {
@@ -47,6 +50,7 @@ var (
 	accountsFlags arrayFlags
 	interval      time.Duration
 	threshold     float64
+	boltPath      string
 )
 
 func main() {
@@ -55,6 +59,7 @@ func main() {
 	flag.Var(&accountsFlags, "vscale", "List of Vscale name to token maps, i.e. 'swarm=123456'")
 	flag.DurationVar(&interval, "interval", 600000000000, "Subscription messages interval in nanoseconds")
 	flag.Float64Var(&threshold, "threshold", 100, "Subscription messages threshold in roubles")
+	flag.StringVar(&boltPath, "bolt-path", "", "BoltDB path")
 	flag.Parse()
 
 	if len(telegramToken) == 0 {
@@ -66,6 +71,11 @@ func main() {
 	}
 
 	accounts, err := accountsFlags.toMap()
+	if err != nil {
+		log.Panic(err)
+	}
+
+	kvStore, err = boltdb.New([]string{boltPath}, &store.Config{Bucket: "alertmanager"})
 	if err != nil {
 		log.Panic(err)
 	}
