@@ -8,16 +8,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/dddpaul/vscalebot/vscale"
+
 	"github.com/docker/libkv/store"
 	"github.com/docker/libkv/store/boltdb"
-	"github.com/vscale/go-vscale"
 	"gopkg.in/telegram-bot-api.v4"
 )
-
-type VscaleAccount struct {
-	Token  string
-	ChatID int64
-}
 
 type arrayFlags []string
 
@@ -30,14 +26,14 @@ func (flags *arrayFlags) Set(value string) error {
 	return nil
 }
 
-func (flags *arrayFlags) toMap() (map[string]*VscaleAccount, error) {
-	accounts := make(map[string]*VscaleAccount)
+func (flags *arrayFlags) toMap() (map[string]*vscale.Account, error) {
+	accounts := make(map[string]*vscale.Account)
 	for _, s := range *flags {
 		items := strings.Split(s, "=")
 		if len(items) == 0 {
 			return nil, errors.New("incorrect Vscale name to token map format")
 		}
-		accounts[items[0]] = &VscaleAccount{
+		accounts[items[0]] = &vscale.Account{
 			Token: items[1],
 		}
 	}
@@ -75,15 +71,16 @@ func main() {
 		log.Panic(err)
 	}
 
-	kvStore, err = boltdb.New([]string{boltPath}, &store.Config{Bucket: "alertmanager"})
+	kvStore, err := boltdb.New([]string{boltPath}, &store.Config{Bucket: "alertmanager"})
 	if err != nil {
 		log.Panic(err)
 	}
+	defer kvStore.Close()
 
-	start(accounts)
+	start(accounts, kvStore)
 }
 
-func start(accounts map[string]*VscaleAccount) {
+func start(accounts map[string]*vscale.Account, kvStore store.Store) {
 	bot, err := tgbotapi.NewBotAPI(telegramToken)
 	if err != nil {
 		log.Panic(err)
@@ -105,7 +102,7 @@ func start(accounts map[string]*VscaleAccount) {
 		for range ticker.C {
 			if subscribed {
 				for name, acc := range accounts {
-					balance := balance(acc.Token)
+					balance := vscale.Balance(acc.Token)
 					if balance <= threshold {
 						c <- tgbotapi.NewMessage(acc.ChatID, fmt.Sprintf("%s balance is %.2f roubles", name, balance))
 					}
@@ -131,7 +128,7 @@ func start(accounts map[string]*VscaleAccount) {
 		for name, acc := range accounts {
 			acc.ChatID = update.Message.Chat.ID
 			if text == "/"+name {
-				c <- tgbotapi.NewMessage(acc.ChatID, fmt.Sprintf("%s balance is %.2f roubles", name, balance(acc.Token)))
+				c <- tgbotapi.NewMessage(acc.ChatID, fmt.Sprintf("%s balance is %.2f roubles", name, vscale.Balance(acc.Token)))
 			} else if text == "/start" {
 				subscribed = true
 				c <- tgbotapi.NewMessage(acc.ChatID, fmt.Sprintf("%s subscribed with %.2f roubles threshold", name, threshold))
@@ -141,13 +138,4 @@ func start(accounts map[string]*VscaleAccount) {
 			}
 		}
 	}
-}
-
-func balance(token string) float64 {
-	client := vscale_api_go.NewClient(token)
-	billing, _, err := client.Billing.Billing()
-	if err != nil {
-		log.Printf("ERROR: %s", err)
-	}
-	return float64(billing.Balance) / 100
 }
