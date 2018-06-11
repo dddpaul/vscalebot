@@ -31,19 +31,23 @@ func NewBot(telegramToken string, accounts map[string]*vscale.Account, threshold
 	log.Printf("Authorized on account %s", bot.Me.Username)
 
 	subscribed := false
-	for name, acc := range accounts {
-		bot.Handle("/"+name, func(m *tb.Message) {
+	bot.Handle("/balance", func(m *tb.Message) {
+		for name, acc := range accounts {
 			bot.Send(m.Sender, fmt.Sprintf("%s balance is %.2f roubles", name, vscale.Balance(acc.Token)))
-		})
-		bot.Handle("/start", func(m *tb.Message) {
-			subscribed = true
+		}
+	})
+	bot.Handle("/start", func(m *tb.Message) {
+		subscribed = true
+		for name := range accounts {
 			bot.Send(m.Sender, fmt.Sprintf("%s subscribed with %.2f roubles threshold", name, threshold))
-		})
-		bot.Handle("/stop", func(m *tb.Message) {
-			subscribed = false
+		}
+	})
+	bot.Handle("/stop", func(m *tb.Message) {
+		subscribed = false
+		for name := range accounts {
 			bot.Send(m.Sender, fmt.Sprintf("%s unsubscribed", name))
-		})
-	}
+		}
+	})
 
 	go func() {
 		ticker := time.NewTicker(interval)
