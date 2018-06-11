@@ -24,10 +24,10 @@
   version = "v1.2.0"
 
 [[projects]]
-  name = "github.com/technoweenie/multipartstreamer"
+  name = "github.com/pkg/errors"
   packages = ["."]
-  revision = "a90a01d73ae432e2611d178c18367fbaa13e0154"
-  version = "v1.0.1"
+  revision = "645ef00459ed84a119197bfb8d8205042c6df63d"
+  version = "v0.8.0"
 
 [[projects]]
   branch = "master"
@@ -39,17 +39,17 @@
   branch = "master"
   name = "golang.org/x/sys"
   packages = ["unix"]
-  revision = "bc2ef10f1b658ea907736406814a6187b49ea3ec"
+  revision = "bff228c7b664c5fce602223a05fb708fd8654986"
 
 [[projects]]
-  name = "gopkg.in/telegram-bot-api.v4"
+  branch = "v2"
+  name = "gopkg.in/tucnak/telebot.v2"
   packages = ["."]
-  revision = "0e0af0c480ea98e982d5f4d45fb39577c6ab1e3e"
-  version = "v4.6.2"
+  revision = "743778f69e925ca80651235174e188793e7ed653"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "24c3e31c65f368897f7e0b521c5f785f479cff6c4b5fece8317c952607ea75a1"
+  inputs-digest = "f5bd07e51b51bd02448ba3ce3d6ebfc30a0d2d6c8ce5224b9512bb25f2b4071f"
   solver-name = "gps-cdcl"
   solver-version = 1
