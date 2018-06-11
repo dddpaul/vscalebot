@@ -19,7 +19,22 @@ type Bot struct {
 	verbose   bool
 }
 
-func NewBot(telegramToken string, accounts map[string]*vscale.Account, threshold float64, interval time.Duration, kvStore store.Store, verbose bool) (*Bot, error) {
+type BotOption func(b *Bot)
+
+func WithThreshold(t float64) BotOption {
+	return func(b *Bot) {
+		b.threshold = t
+	}
+}
+
+func WithInterval(i time.Duration) BotOption {
+	return func(b *Bot) {
+		b.interval = i
+	}
+}
+
+// func NewBot(telegramToken string, accounts map[string]*vscale.Account, threshold float64, interval time.Duration, kvStore store.Store, verbose bool) (*Bot, error) {
+func NewBot(telegramToken string, accounts map[string]*vscale.Account, opts ...BotOption) (*Bot, error) {
 	bot, err := tb.NewBot(tb.Settings{
 		Token:  telegramToken,
 		Poller: &tb.LongPoller{Timeout: 10 * time.Second},
@@ -63,6 +78,9 @@ func NewBot(telegramToken string, accounts map[string]*vscale.Account, threshold
 		}
 	}()
 
+	for _, opt := range opts {
+		opt(bot)
+	}
 	return &Bot{
 		bot:       bot,
 		accounts:  accounts,
