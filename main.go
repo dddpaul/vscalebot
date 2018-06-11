@@ -81,5 +81,5 @@ func main() {
 		log.Panic(err)
 	}
 
-	bot.Run()
+	bot.Start()
 }

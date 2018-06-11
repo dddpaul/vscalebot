@@ -2,6 +2,7 @@ package vscale
 
 import (
 	"log"
+	"strconv"
 
 	"github.com/vscale/go-vscale"
 )
@@ -10,6 +11,10 @@ import (
 type Account struct {
 	Token  string
 	ChatID int64
+}
+
+func (account Account) Recipient() string {
+	return strconv.FormatInt(account.ChatID, 10)
 }
 
 // Balance returns Vscale account balance in roubles
