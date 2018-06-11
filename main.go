@@ -3,16 +3,15 @@ package main
 import (
 	"errors"
 	"flag"
-	"fmt"
 	"log"
 	"strings"
 	"time"
 
+	"github.com/dddpaul/vscalebot/telegram"
 	"github.com/dddpaul/vscalebot/vscale"
 
 	"github.com/docker/libkv/store"
 	"github.com/docker/libkv/store/boltdb"
-	"gopkg.in/telegram-bot-api.v4"
 )
 
 type arrayFlags []string
@@ -77,65 +76,10 @@ func main() {
 	}
 	defer kvStore.Close()
 
-	start(accounts, kvStore)
-}
-
-func start(accounts map[string]*vscale.Account, kvStore store.Store) {
-	bot, err := tgbotapi.NewBotAPI(telegramToken)
+	bot, err := telegram.NewBot(telegramToken, accounts, threshold, interval, kvStore, verbose)
 	if err != nil {
 		log.Panic(err)
 	}
 
-	bot.Debug = verbose
-	log.Printf("Authorized on account %s", bot.Self.UserName)
-
-	c := make(chan tgbotapi.MessageConfig)
-	go func() {
-		for msg := range c {
-			bot.Send(msg)
-		}
-	}()
-
-	subscribed := false
-	go func() {
-		ticker := time.NewTicker(interval)
-		for range ticker.C {
-			if subscribed {
-				for name, acc := range accounts {
-					balance := vscale.Balance(acc.Token)
-					if balance <= threshold {
-						c <- tgbotapi.NewMessage(acc.ChatID, fmt.Sprintf("%s balance is %.2f roubles", name, balance))
-					}
-				}
-			}
-		}
-	}()
-
-	updates, _ := bot.GetUpdatesChan(tgbotapi.UpdateConfig{
-		Offset:  0,
-		Limit:   0,
-		Timeout: 60,
-	})
-
-	for update := range updates {
-		if update.Message == nil {
-			continue
-		}
-
-		text := update.Message.Text
-		log.Printf("[%s] %s", update.Message.From.UserName, text)
-
-		for name, acc := range accounts {
-			acc.ChatID = update.Message.Chat.ID
-			if text == "/"+name {
-				c <- tgbotapi.NewMessage(acc.ChatID, fmt.Sprintf("%s balance is %.2f roubles", name, vscale.Balance(acc.Token)))
-			} else if text == "/start" {
-				subscribed = true
-				c <- tgbotapi.NewMessage(acc.ChatID, fmt.Sprintf("%s subscribed with %.2f roubles threshold", name, threshold))
-			} else if text == "/stop" {
-				subscribed = false
-				c <- tgbotapi.NewMessage(acc.ChatID, fmt.Sprintf("%s unsubscribed", name))
-			}
-		}
-	}
+	bot.Run()
 }
