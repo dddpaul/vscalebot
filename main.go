@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/dddpaul/vscalebot/telegram"
-	"github.com/dddpaul/vscalebot/vscale"
+	"github.com/dddpaul/vscalebot/pkg/telegram"
+	"github.com/dddpaul/vscalebot/pkg/vscale"
 
 	"github.com/docker/libkv/store"
 	"github.com/docker/libkv/store/boltdb"
@@ -81,10 +81,7 @@ func main() {
 		log.Panic(err)
 	}
 
-	bot, err := telegram.NewBot(
-		telegramToken,
-		chats,
-		accounts,
+	bot, err := telegram.NewBot(telegramToken, chats, accounts,
 		telegram.WithThreshold(threshold),
 		telegram.WithInterval(interval),
 		telegram.WithVerbose(verbose))

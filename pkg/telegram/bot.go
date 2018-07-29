@@ -5,7 +5,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/dddpaul/vscalebot/vscale"
+	"github.com/dddpaul/vscalebot/pkg/vscale"
 	"github.com/docker/libkv/store"
 	tb "gopkg.in/tucnak/telebot.v2"
 )
