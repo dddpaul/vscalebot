@@ -1,7 +1,7 @@
 .PHONY: all build release
 
 IMAGE=dddpaul/vscalebot
-VERSION=0.9
+VERSION=1.0
 
 all: build
 
