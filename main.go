@@ -70,13 +70,19 @@ func main() {
 		log.Panic(err)
 	}
 
-	kvStore, err := boltdb.New([]string{boltPath}, &store.Config{Bucket: "alertmanager"})
+	kv, err := boltdb.New([]string{boltPath}, &store.Config{Bucket: "alertmanager"})
 	if err != nil {
 		log.Panic(err)
 	}
-	defer kvStore.Close()
+	defer kv.Close()
 
-	bot, err := telegram.NewBot(telegramToken, accounts, telegram.WithThreshold(threshold), telegram.WithInterval(interval))
+	bot, err := telegram.NewBot(
+		telegramToken,
+		accounts,
+		telegram.WithThreshold(threshold),
+		telegram.WithInterval(interval),
+		telegram.WithStore(kv),
+		telegram.WithVerbose(verbose))
 	if err != nil {
 		log.Panic(err)
 	}
