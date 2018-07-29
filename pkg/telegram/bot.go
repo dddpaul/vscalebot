@@ -47,17 +47,17 @@ func WithVerbose(v bool) BotOption {
 }
 
 func NewBot(telegramToken string, chats BotChatStore, accounts map[string]*vscale.Account, opts ...BotOption) (*Bot, error) {
-	b, err := tb.NewBot(tb.Settings{
+	bot, err := tb.NewBot(tb.Settings{
 		Token:  telegramToken,
 		Poller: &tb.LongPoller{Timeout: 10 * time.Second},
 	})
 	if err != nil {
 		return nil, err
 	}
-	log.Printf("Authorized on account %s\n", b.Me.Username)
+	log.Printf("Authorized on account %s\n", bot.Me.Username)
 
-	bot := &Bot{
-		bot:       b,
+	b := &Bot{
+		bot:       bot,
 		chats:     chats,
 		accounts:  accounts,
 		threshold: 0,
@@ -66,27 +66,10 @@ func NewBot(telegramToken string, chats BotChatStore, accounts map[string]*vscal
 	}
 
 	for _, opt := range opts {
-		opt(bot)
+		opt(b)
 	}
 
-	b.Handle("/balance", func(m *tb.Message) {
-		for name, acc := range accounts {
-			b.Send(m.Sender, fmt.Sprintf("%s balance is %.2f roubles", name, vscale.Balance(acc.Token)))
-		}
-	})
-	b.Handle("/start", func(m *tb.Message) {
-		chats.Add(*m.Chat)
-		for name := range accounts {
-			b.Send(m.Sender, fmt.Sprintf("%s subscribed with %.2f roubles threshold", name, bot.threshold))
-		}
-	})
-	b.Handle("/stop", func(m *tb.Message) {
-		chats.Remove(*m.Chat)
-		for name := range accounts {
-			b.Send(m.Sender, fmt.Sprintf("%s unsubscribed", name))
-		}
-	})
-	return bot, nil
+	return b, nil
 }
 
 func (b *Bot) Start() {
@@ -107,6 +90,24 @@ func (b *Bot) Start() {
 			}
 		}
 	}()
+
+	b.bot.Handle("/balance", func(m *tb.Message) {
+		for name, acc := range b.accounts {
+			b.bot.Send(m.Sender, fmt.Sprintf("%s balance is %.2f roubles", name, vscale.Balance(acc.Token)))
+		}
+	})
+	b.bot.Handle("/start", func(m *tb.Message) {
+		b.chats.Add(*m.Chat)
+		for name := range b.accounts {
+			b.bot.Send(m.Sender, fmt.Sprintf("%s subscribed with %.2f roubles threshold", name, b.threshold))
+		}
+	})
+	b.bot.Handle("/stop", func(m *tb.Message) {
+		b.chats.Remove(*m.Chat)
+		for name := range b.accounts {
+			b.bot.Send(m.Sender, fmt.Sprintf("%s unsubscribed", name))
+		}
+	})
 
 	b.bot.Start()
 }
