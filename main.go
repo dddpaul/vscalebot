@@ -76,12 +76,17 @@ func main() {
 	}
 	defer kv.Close()
 
+	chats, err := telegram.NewChatStore(kv)
+	if err != nil {
+		log.Panic(err)
+	}
+
 	bot, err := telegram.NewBot(
 		telegramToken,
+		chats,
 		accounts,
 		telegram.WithThreshold(threshold),
 		telegram.WithInterval(interval),
-		telegram.WithStore(kv),
 		telegram.WithVerbose(verbose))
 	if err != nil {
 		log.Panic(err)

@@ -1,20 +1,13 @@
 package vscale
 
 import (
-	"log"
-	"strconv"
-
 	"github.com/vscale/go-vscale"
+	"log"
 )
 
 // Account incapsulates Vscale account credential
 type Account struct {
-	Token  string
-	ChatID int64
-}
-
-func (account Account) Recipient() string {
-	return strconv.FormatInt(account.ChatID, 10)
+	Token string
 }
 
 // Balance returns Vscale account balance in roubles
