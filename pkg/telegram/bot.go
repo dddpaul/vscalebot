@@ -108,6 +108,13 @@ func (b *Bot) Start() {
 			b.bot.Send(m.Sender, fmt.Sprintf("%s unsubscribed", name))
 		}
 	})
+	b.bot.Handle("/status", func(m *tb.Message) {
+		chats, err := b.chats.List()
+		if err != nil {
+			log.Panic(err)
+		}
+		b.bot.Send(m.Sender, fmt.Sprintf("Subscribers: %d", len(chats)))
+	})
 
 	b.bot.Start()
 }
