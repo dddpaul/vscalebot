@@ -12,6 +12,7 @@ import (
 
 	"github.com/docker/libkv/store"
 	"github.com/docker/libkv/store/boltdb"
+	"github.com/docker/libkv/store/consul"
 )
 
 type arrayFlags []string
@@ -45,7 +46,9 @@ var (
 	accountsFlags arrayFlags
 	interval      time.Duration
 	threshold     float64
+	storeType     string
 	boltPath      string
+	consulURL     string
 )
 
 func main() {
@@ -54,7 +57,9 @@ func main() {
 	flag.Var(&accountsFlags, "vscale", "List of Vscale name to token maps, i.e. 'swarm=123456'")
 	flag.DurationVar(&interval, "interval", 600000000000, "Subscription messages interval in nanoseconds")
 	flag.Float64Var(&threshold, "threshold", 100, "Subscription messages threshold in roubles")
+	flag.StringVar(&storeType, "store", "bolt", "Store type - bolt / consul")
 	flag.StringVar(&boltPath, "bolt-path", "", "BoltDB path")
+	flag.StringVar(&consulURL, "consul-url", "", "Consul URL")
 	flag.Parse()
 
 	if len(telegramToken) == 0 {
@@ -70,9 +75,20 @@ func main() {
 		log.Panic(err)
 	}
 
-	kv, err := boltdb.New([]string{boltPath}, &store.Config{Bucket: "alertmanager"})
-	if err != nil {
-		log.Panic(err)
+	var kv store.Store
+	switch storeType {
+	case "bolt":
+		kv, err = boltdb.New([]string{boltPath}, &store.Config{Bucket: "alertmanager"})
+		if err != nil {
+			log.Panic(err)
+		}
+	case "consul":
+		kv, err = consul.New([]string{consulURL}, nil)
+		if err != nil {
+			log.Panic(err)
+		}
+	default:
+		log.Panicf("Store must be bolt or consul!\n")
 	}
 	defer kv.Close()
 
