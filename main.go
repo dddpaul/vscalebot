@@ -41,19 +41,21 @@ func (flags *arrayFlags) toMap() (map[string]*vscale.Account, error) {
 }
 
 var (
-	verbose       bool
-	telegramToken string
-	accountsFlags arrayFlags
-	interval      time.Duration
-	threshold     float64
-	storeType     string
-	boltPath      string
-	consulURL     string
+	verbose          bool
+	telegramToken    string
+	telegramProxyURL string
+	accountsFlags    arrayFlags
+	interval         time.Duration
+	threshold        float64
+	storeType        string
+	boltPath         string
+	consulURL        string
 )
 
 func main() {
 	flag.BoolVar(&verbose, "verbose", false, "Enable bot debug")
 	flag.StringVar(&telegramToken, "telegram-token", "", "Telegram API token")
+	flag.StringVar(&telegramProxyURL, "telegram-proxy-url", "", "Telegram SOCKS5 proxy url")
 	flag.Var(&accountsFlags, "vscale", "List of Vscale name to token maps, i.e. 'swarm=123456'")
 	flag.DurationVar(&interval, "interval", 600000000000, "Subscription messages interval in nanoseconds")
 	flag.Float64Var(&threshold, "threshold", 100, "Subscription messages threshold in roubles")
@@ -100,7 +102,8 @@ func main() {
 	bot, err := telegram.NewBot(telegramToken, chats, accounts,
 		telegram.WithThreshold(threshold),
 		telegram.WithInterval(interval),
-		telegram.WithVerbose(verbose))
+		telegram.WithVerbose(verbose),
+		telegram.WithSocks(telegramProxyURL))
 	if err != nil {
 		log.Panic(err)
 	}

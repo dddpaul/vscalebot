@@ -96,6 +96,17 @@
 
 [[projects]]
   branch = "master"
+  digest = "1:4f7d853903a2a32b60c99f92492752a52bf9b56425258afbed5cfc2ee86cd216"
+  name = "golang.org/x/net"
+  packages = [
+    "internal/socks",
+    "proxy",
+  ]
+  pruneopts = ""
+  revision = "aaf60122140d3fcf75376d319f0554393160eb50"
+
+[[projects]]
+  branch = "master"
   digest = "1:1132cbdac95d6a2a30f7434f7190b3b1345e85b6071e74911b1dce3e19e1543d"
   name = "golang.org/x/sys"
   packages = ["unix"]
@@ -118,6 +129,7 @@
     "github.com/docker/libkv/store/boltdb",
     "github.com/docker/libkv/store/consul",
     "github.com/vscale/go-vscale",
+    "golang.org/x/net/proxy",
     "gopkg.in/tucnak/telebot.v2",
   ]
   solver-name = "gps-cdcl"

@@ -3,10 +3,13 @@ package telegram
 import (
 	"fmt"
 	"log"
+	"net/http"
+	"net/url"
 	"time"
 
 	"github.com/dddpaul/vscalebot/pkg/vscale"
 	"github.com/docker/libkv/store"
+	"golang.org/x/net/proxy"
 	tb "gopkg.in/tucnak/telebot.v2"
 )
 
@@ -24,6 +27,7 @@ type Bot struct {
 	interval  time.Duration
 	store     store.Store
 	verbose   bool
+	client    *http.Client
 }
 
 type BotOption func(b *Bot)
@@ -46,29 +50,60 @@ func WithVerbose(v bool) BotOption {
 	}
 }
 
-func NewBot(telegramToken string, chats BotChatStore, accounts map[string]*vscale.Account, opts ...BotOption) (*Bot, error) {
-	bot, err := tb.NewBot(tb.Settings{
-		Token:  telegramToken,
-		Poller: &tb.LongPoller{Timeout: 10 * time.Second},
-	})
-	if err != nil {
-		return nil, err
-	}
-	log.Printf("Authorized on account %s\n", bot.Me.Username)
+func WithSocks(s string) BotOption {
+	return func(b *Bot) {
+		if len(s) == 0 {
+			return
+		}
 
+		u, err := url.Parse(s)
+		if err != nil {
+			log.Panic(err)
+		}
+
+		var auth *proxy.Auth
+		if u.User != nil {
+			auth = &proxy.Auth{
+				User: u.User.Username(),
+			}
+			if p, ok := u.User.Password(); ok {
+				auth.Password = p
+			}
+		}
+
+		dialer, err := proxy.SOCKS5("tcp", u.Host, auth, proxy.Direct)
+		if err != nil {
+			log.Panic(err)
+		}
+		httpTransport := &http.Transport{
+			Dial: dialer.Dial,
+		}
+		client := &http.Client{Transport: httpTransport}
+		b.client = client
+	}
+}
+
+func NewBot(telegramToken string, chats BotChatStore, accounts map[string]*vscale.Account, opts ...BotOption) (*Bot, error) {
 	b := &Bot{
-		bot:       bot,
-		chats:     chats,
-		accounts:  accounts,
-		threshold: 0,
-		interval:  0,
-		verbose:   false,
+		chats:    chats,
+		accounts: accounts,
 	}
 
 	for _, opt := range opts {
 		opt(b)
 	}
 
+	bot, err := tb.NewBot(tb.Settings{
+		Token:  telegramToken,
+		Poller: &tb.LongPoller{Timeout: 10 * time.Second},
+		Client: b.client,
+	})
+	if err != nil {
+		return nil, err
+	}
+	log.Printf("Authorized on account %s\n", bot.Me.Username)
+
+	b.bot = bot
 	return b, nil
 }
 
