@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/dddpaul/vscalebot/pkg/vscale"
-	"github.com/docker/libkv/store"
 	"golang.org/x/net/proxy"
 	tb "gopkg.in/tucnak/telebot.v2"
 )
@@ -25,7 +24,6 @@ type Bot struct {
 	accounts  map[string]*vscale.Account
 	threshold float64
 	interval  time.Duration
-	store     store.Store
 	verbose   bool
 	client    *http.Client
 }
