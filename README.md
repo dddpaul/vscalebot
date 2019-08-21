@@ -18,9 +18,17 @@ docker pull dddpaul/vscalebot
 Usage:
 
 ```
-Usage of ./vscalebot:
+Usage of vscalebot:
+  -bolt-path string
+    	BoltDB path
+  -consul-url string
+    	Consul URL
   -interval duration
     	Subscription messages interval in nanoseconds (default 10m0s)
+  -store string
+    	Store type - bolt / consul (default "bolt")
+  -telegram-proxy-url string
+    	Telegram SOCKS5 proxy url
   -telegram-token string
     	Telegram API token
   -threshold float
