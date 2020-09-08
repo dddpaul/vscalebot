@@ -25,6 +25,7 @@ type Bot struct {
 	threshold float64
 	interval  time.Duration
 	verbose   bool
+	admin     string
 	client    *http.Client
 }
 
@@ -81,6 +82,12 @@ func WithSocks(s string) BotOption {
 	}
 }
 
+func WithAdmin(a string) BotOption {
+	return func(b *Bot) {
+		b.admin = a
+	}
+}
+
 func NewBot(telegramToken string, chats BotChatStore, accounts map[string]*vscale.Account, opts ...BotOption) (*Bot, error) {
 	b := &Bot{
 		chats:    chats,
@@ -124,24 +131,44 @@ func (b *Bot) Start() {
 		}
 	}()
 
+	check := func(m *tb.Message) bool {
+		if b.admin != "" && b.admin != m.Sender.Username {
+			b.bot.Send(m.Sender, "Access restricted")
+			return false
+		}
+		return true
+	}
+
 	b.bot.Handle("/balance", func(m *tb.Message) {
+		if !check(m) {
+			return
+		}
 		for name, acc := range b.accounts {
 			b.bot.Send(m.Sender, fmt.Sprintf("%s balance is %.2f roubles", name, vscale.Balance(acc.Token)))
 		}
 	})
 	b.bot.Handle("/start", func(m *tb.Message) {
+		if !check(m) {
+			return
+		}
 		b.chats.Add(*m.Chat)
 		for name := range b.accounts {
 			b.bot.Send(m.Sender, fmt.Sprintf("%s subscribed with %.2f roubles threshold", name, b.threshold))
 		}
 	})
 	b.bot.Handle("/stop", func(m *tb.Message) {
+		if !check(m) {
+			return
+		}
 		b.chats.Remove(*m.Chat)
 		for name := range b.accounts {
 			b.bot.Send(m.Sender, fmt.Sprintf("%s unsubscribed", name))
 		}
 	})
 	b.bot.Handle("/status", func(m *tb.Message) {
+		if !check(m) {
+			return
+		}
 		chats, err := b.chats.List()
 		if err != nil {
 			log.Panic(err)

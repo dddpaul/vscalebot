@@ -1,7 +1,7 @@
 Vscale Bot
 =========
 
-Simple Telegram bot for vscale.ru written in Go.
+Simple Telegram bot for vscale.io written in Go.
 
 Install:
 
@@ -31,6 +31,8 @@ Usage of vscalebot:
     	Telegram SOCKS5 proxy url
   -telegram-token string
     	Telegram API token
+  -telegram-admin string
+    	Telegram admin user
   -threshold float
     	Subscription messages threshold in roubles (default 100)
   -verbose
