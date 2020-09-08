@@ -131,7 +131,8 @@ func (b *Bot) Start() {
 		}
 	}()
 
-	check := func(m *tb.Message) bool {
+	check := func(cmd string, m *tb.Message) bool {
+		log.Printf("Received '%s' command from '%s'", cmd, m.Sender.Username)
 		if b.admin != "" && b.admin != m.Sender.Username {
 			b.bot.Send(m.Sender, "Access restricted")
 			return false
@@ -140,7 +141,7 @@ func (b *Bot) Start() {
 	}
 
 	b.bot.Handle("/balance", func(m *tb.Message) {
-		if !check(m) {
+		if !check("/balance", m) {
 			return
 		}
 		for name, acc := range b.accounts {
@@ -148,7 +149,7 @@ func (b *Bot) Start() {
 		}
 	})
 	b.bot.Handle("/start", func(m *tb.Message) {
-		if !check(m) {
+		if !check("/start", m) {
 			return
 		}
 		b.chats.Add(*m.Chat)
@@ -157,7 +158,7 @@ func (b *Bot) Start() {
 		}
 	})
 	b.bot.Handle("/stop", func(m *tb.Message) {
-		if !check(m) {
+		if !check("/stop", m) {
 			return
 		}
 		b.chats.Remove(*m.Chat)
@@ -166,12 +167,12 @@ func (b *Bot) Start() {
 		}
 	})
 	b.bot.Handle("/status", func(m *tb.Message) {
-		if !check(m) {
+		if !check("/status", m) {
 			return
 		}
 		chats, err := b.chats.List()
 		if err != nil {
-			log.Panic(err)
+			log.Print(err)
 		}
 		b.bot.Send(m.Sender, fmt.Sprintf("Subscribers: %d", len(chats)))
 	})
