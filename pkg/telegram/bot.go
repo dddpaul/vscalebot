@@ -172,7 +172,7 @@ func (b *Bot) Start() {
 		}
 		chats, err := b.chats.List()
 		if err != nil {
-			log.Print(err)
+			log.Printf("ERROR: %s", err)
 		}
 		b.bot.Send(m.Sender, fmt.Sprintf("Subscribers: %d", len(chats)))
 	})

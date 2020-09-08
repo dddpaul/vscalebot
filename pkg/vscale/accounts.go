@@ -1,8 +1,9 @@
 package vscale
 
 import (
-	"github.com/vscale/go-vscale"
 	"log"
+
+	vscale_api_go "github.com/vscale/go-vscale"
 )
 
 // Account incapsulates Vscale account credential
