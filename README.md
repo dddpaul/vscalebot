@@ -5,19 +5,19 @@ Simple Telegram bot for vscale.ru written in Go.
 
 Install:
 
-```
+```bash
 go get -u github.com/dddpaul/vscalebot
 ```
 
 Or grab Docker image:
 
-```
+```bash
 docker pull dddpaul/vscalebot
 ```
 
 Usage:
 
-```
+```bash
 Usage of vscalebot:
   -bolt-path string
     	BoltDB path
