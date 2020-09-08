@@ -120,10 +120,10 @@ func (b *Bot) Start() {
 			if err != nil {
 				log.Panic(err)
 			}
-			for _, c := range chats {
-				for name, acc := range b.accounts {
-					balance := vscale.Balance(acc.Token)
-					if balance <= b.threshold {
+			for name, acc := range b.accounts {
+				balance := vscale.Balance(acc.Token)
+				if balance <= b.threshold {
+					for _, c := range chats {
 						b.bot.Send(&c, fmt.Sprintf("%s balance is %.2f roubles", name, balance))
 					}
 				}
