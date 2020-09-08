@@ -1,7 +1,6 @@
 .PHONY: all build release
 
 IMAGE=dddpaul/vscalebot
-VERSION=1.3.1
 
 all: build
 
@@ -15,8 +14,9 @@ debug:
 	@docker run -it --entrypoint=sh ${IMAGE}
 
 release: build
-	@docker build --tag=${IMAGE}:${VERSION} .
+	@echo "Tag image with version $(version)"
+	@docker tag ${IMAGE} ${IMAGE}:$(version)
 
-deploy: release
+push: release
 	@docker push ${IMAGE}
-	@docker push ${IMAGE}:${VERSION}
+	@docker push ${IMAGE}:$(version)
