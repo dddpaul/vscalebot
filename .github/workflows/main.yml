@@ -20,7 +20,7 @@ jobs:
 
       - name: Create Release
         id: release
-        uses: rymndhng/release-on-push-action@v0.15.0
+        uses: rymndhng/release-on-push-action@v0.27.0
         with:
           bump_version_scheme: minor
 
